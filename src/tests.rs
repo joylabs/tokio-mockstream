@@ -3,36 +3,37 @@ extern crate bytes;
 use std::{io, str};
 use super::MockStream;
 use self::bytes::{BufMut, BytesMut};
-use tokio_io::AsyncRead;
-use tokio_io::codec::{Encoder, Decoder};
+use futures::{SinkExt, StreamExt};
+use tokio::codec::{Encoder, Decoder};
 
-#[test]
-fn writing_to_mockstream() {
-    use futures::{Future, Sink};
-
-    let stream = MockStream::empty().framed(LineCodec);
-    let stream = stream.send("This is a test of the emergency broadcast system.".to_owned())
-        .wait().unwrap();
+#[tokio::test]
+async fn writing_to_mockstream() {
+    let mut stream = LineCodec::new().framed(MockStream::empty());
+    stream.send("This is a test of the emergency broadcast system.".to_owned()).await.unwrap();
     let inner = stream.into_inner();
     assert!(inner.received().is_empty());
     let expected = b"This is a test of the emergency broadcast system.\n";
     assert_eq!(inner.written().to_owned(), expected.to_vec());
 }
 
-#[test]
-fn reading_from_mockstream() {
-    use futures::Stream;
-   
-    let mut iter = MockStream::new(b"Hello\nGoodbye\n").framed(LineCodec).wait();
-    let first = iter.next().unwrap();
+#[tokio::test]
+async fn reading_from_mockstream() {
+    let mut iter = LineCodec::new().framed(MockStream::new(b"Hello\nGoodbye\n"));
+    let first = iter.next().await.unwrap();
     assert_eq!(&first.unwrap(), "Hello");
-    let second = iter.next().unwrap();
+    let second = iter.next().await.unwrap();
     assert_eq!(&second.unwrap(), "Goodbye");
-    assert!(iter.next().is_none());
+    assert!(iter.next().await.is_none());
 }
 
 /// A line codec taken from the Tokio examples.
 struct LineCodec;
+
+impl LineCodec {
+    fn new() -> Self {
+        LineCodec {}
+    }
+}
 
 impl Decoder for LineCodec {
     type Item = String;

@@ -7,10 +7,11 @@ license = "MIT/Apache-2.0"
 keywords = ["testing", "async"]
 repository = "https://github.com/aatxe/tokio-mockstream"
 readme = "README.md"
+edition = "2018"
 
 [dependencies]
-futures = "0.1"
-tokio-io = "0.1"
+tokio = "0.2.0-alpha.4"
+futures-preview = "=0.3.0-alpha.18"
 
 [dev-dependencies]
 bytes = "0.4"

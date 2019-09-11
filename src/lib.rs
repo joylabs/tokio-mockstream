@@ -2,12 +2,14 @@
 #![warn(missing_docs)]
 
 extern crate futures;
-extern crate tokio_io;
+extern crate tokio;
 
+use std::task::Context;
+use std::pin::Pin;
 use std::io;
 use std::io::{Cursor, Read, Write};
 use futures::Poll;
-use tokio_io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite};
 
 /// A fake stream for testing network applications backed by buffers.
 #[derive(Clone, Debug)]
@@ -47,7 +49,15 @@ impl Read for MockStream {
     }
 }
 
-impl AsyncRead for MockStream {}
+impl AsyncRead for MockStream {
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+        buf: &mut [u8],
+    ) -> Poll<io::Result<usize>> {
+        Poll::Ready(self.read(buf))
+    }
+}
 
 impl Write for MockStream {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
@@ -60,10 +70,29 @@ impl Write for MockStream {
 }
 
 impl AsyncWrite for MockStream {
-    fn shutdown(&mut self) -> Poll<(), io::Error> {
-        self.written.shutdown()
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<Result<usize, io::Error>> {
+        Poll::Ready(self.write(buf))
+    }
+
+    fn poll_flush(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context<'_>
+    ) -> Poll<Result<(), io::Error>> {
+        Poll::Ready(self.flush())
+    }
+
+    fn poll_shutdown(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>
+    ) -> Poll<Result<(), io::Error>> {
+        Poll::Ready(Ok(()))
     }
 }
+
 
 #[cfg(test)]
 mod tests;
