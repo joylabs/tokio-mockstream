@@ -1,0 +1,2 @@
+[registries]
+joylabs-crates = { index = "https://dl.cloudsmith.io/basic/joylabs/crates/cargo/index.git" }
