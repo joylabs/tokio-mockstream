@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  build:
+    build: .
+      cache_from:
+        - gcr.io/${PROJECT_ID}/${REPO_NAME}/${BRANCH_NAME}:build
+    image: gcr.io/${PROJECT_ID}/${REPO_NAME}/${BRANCH_NAME}:build
+    volumes:
+      - .:/project
+      - ~/.config/gcloud:/root/.config/gcloud
+    working_dir: /project
+    environment:
+      - RELEASE
+      - BRANCH_NAME
+      - CARGO_HOME=/project/build/cache/.cargo
+      - CARGO_TARGET_DIR=/project/build/cache/target
+    tty: true
