@@ -1,15 +1,18 @@
 extern crate bytes;
 
-use std::{io, str};
-use super::MockStream;
 use self::bytes::{BufMut, BytesMut};
-use futures::{SinkExt, StreamExt};
-use tokio::codec::{Encoder, Decoder};
+use super::MockStream;
+use std::{io, str};
+use tokio::codec::{Decoder, Encoder};
+use tokio::prelude::*;
 
 #[tokio::test]
 async fn writing_to_mockstream() {
     let mut stream = LineCodec::new().framed(MockStream::empty());
-    stream.send("This is a test of the emergency broadcast system.".to_owned()).await.unwrap();
+    stream
+        .send("This is a test of the emergency broadcast system.".to_owned())
+        .await
+        .unwrap();
     let inner = stream.into_inner();
     assert!(inner.received().is_empty());
     let expected = b"This is a test of the emergency broadcast system.\n";
@@ -52,7 +55,7 @@ impl Decoder for LineCodec {
             return match str::from_utf8(&line.as_ref()) {
                 Ok(s) => Ok(Some(s.to_string())),
                 Err(_) => Err(io::Error::new(io::ErrorKind::Other, "invalid string")),
-            }
+            };
         }
 
         Ok(None)

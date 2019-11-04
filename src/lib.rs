@@ -1,14 +1,13 @@
 //! A fake stream for testing network applications backed by buffers.
 #![warn(missing_docs)]
 
-extern crate futures;
 extern crate tokio;
 
-use std::task::Context;
-use std::pin::Pin;
 use std::io;
 use std::io::{Cursor, Read, Write};
-use futures::Poll;
+use std::pin::Pin;
+use std::task::Context;
+use std::task::Poll;
 use tokio::io::{AsyncRead, AsyncWrite};
 
 /// A fake stream for testing network applications backed by buffers.
@@ -78,21 +77,14 @@ impl AsyncWrite for MockStream {
         Poll::Ready(self.write(buf))
     }
 
-    fn poll_flush(
-        mut self: Pin<&mut Self>,
-        _cx: &mut Context<'_>
-    ) -> Poll<Result<(), io::Error>> {
+    fn poll_flush(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         Poll::Ready(self.flush())
     }
 
-    fn poll_shutdown(
-        self: Pin<&mut Self>,
-        _cx: &mut Context<'_>
-    ) -> Poll<Result<(), io::Error>> {
+    fn poll_shutdown(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         Poll::Ready(Ok(()))
     }
 }
-
 
 #[cfg(test)]
 mod tests;
